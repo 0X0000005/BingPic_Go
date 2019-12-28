@@ -1,0 +1,1 @@
+download bing pic for go
