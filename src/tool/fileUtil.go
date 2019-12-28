@@ -2,36 +2,52 @@ package tool
 
 import (
 	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 )
 
-func getFileMD5(path string)(string,error) {
+func GetFileMD5(path string)string {
 	data,err := ioutil.ReadFile(path)
 	if err != nil {
-		return "",err
+		return ""
 	}
 	value := md5.Sum(data)
 	result := hex.EncodeToString(value[:])
 	fmt.Printf("md5 value:%v\n",result)
-	return result,err
+	return result
 }
 
-func CheckFileAndWrite(path string,data []byte) bool{
-	if isExists(path) {
-		return true
+func GetFileHash(path string) string {
+	file,err := os.Open(path)
+	if err != nil {
+		return ""
 	}
+	defer file.Close()
+	hash := sha256.New()
+	_,err2 := io.Copy(hash,file)
+	if err2 != nil {
+		return ""
+	}
+	value := hash.Sum(nil)
+	result := hex.EncodeToString(value)
+	fmt.Printf("hash value:%v\n",result)
+	return result
+}
+
+func WriteFile(path string,data []byte) bool{
 	err := ioutil.WriteFile(path,data,0666)
 	if err != nil {
-		fmt.Printf("write file error:%v\n")
+		fmt.Printf("write file error:%v\n",err)
 		return false
 	}
 	return true
 }
 
-func isExists(path string)(b bool){
+func IsExists(path string)(b bool){
 	b = true
 	_,err := os.Stat(path)
 	if err != nil {
@@ -72,4 +88,12 @@ func isFile(path string) bool {
 		return false
 	}
 	return !fileInfo.IsDir()
+}
+
+func GetFileSize(path string)int64{
+	fileInfo,err := os.Stat(path)
+	if err != nil {
+		return 0
+	}
+	return fileInfo.Size()
 }

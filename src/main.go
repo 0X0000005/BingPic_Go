@@ -20,14 +20,6 @@ func main() {
 	}
 	tool.IsExistsAndCreate(service.WALLPAPER,true)
 	for _,imgInfo := range bing.Images {
-		enddate := imgInfo.Enddate
-		url := imgInfo.Url
-		//hash := imgInfo.Hsh
-		//copyright := imgInfo.Copyright
-		imgUrl := service.BINGIMAGEBASE+url
-		fmt.Println(imgUrl)
-		bytes := tool.GetRequest(imgUrl)
-		fmt.Println(len(bytes))
-		tool.CheckFileAndWrite(service.WALLPAPER+"\\"+enddate+".jpg",bytes)
+		service.Download(imgInfo)
 	}
 }

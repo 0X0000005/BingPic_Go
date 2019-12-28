@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func GetRequest(url string) []byte {
+func GetRequest(url string) ([]byte) {
 	resp, err := http.Get(url)
 	defer resp.Body.Close()
 	if nil != err {

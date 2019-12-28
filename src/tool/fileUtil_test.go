@@ -5,42 +5,150 @@ import (
 	"testing"
 )
 
-const path = "C://Users//wzy//Desktop//menu.json"
-
-const dir = "C://Users//wzy//Desktop"
+func TestGetFileHash(t *testing.T) {
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetFileHash(tt.args.path); got != tt.want {
+				t.Errorf("GetFileHash() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestGetFileMD5(t *testing.T) {
-	_,err := getFileMD5(path)
-	if err != nil {
-		panic(err)
+	type args struct {
+		path string
 	}
-
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetFileMD5(tt.args.path); got != tt.want {
+				t.Errorf("GetFileMD5() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
-func Test_checkFileAndWrite(t *testing.T) {
+const path = "D:\\BingWallpapers\\20191221.jpg"
 
+func TestGetFileSize(t *testing.T) {
+	fmt.Println(GetFileSize(path))
 }
 
-func Test_fileIsExists(t *testing.T) {
+func TestIsExists(t *testing.T) {
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wantB bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotB := IsExists(tt.args.path); gotB != tt.wantB {
+				t.Errorf("IsExists() = %v, want %v", gotB, tt.wantB)
+			}
+		})
+	}
 }
 
-func Test_getFileMD5(t *testing.T) {
+func TestIsExistsAndCreate(t *testing.T) {
+	type args struct {
+		path        string
+		isDirectory bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := IsExistsAndCreate(tt.args.path, tt.args.isDirectory); (err != nil) != tt.wantErr {
+				t.Errorf("IsExistsAndCreate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestWriteFile(t *testing.T) {
+	type args struct {
+		path string
+		data []byte
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := WriteFile(tt.args.path, tt.args.data); got != tt.want {
+				t.Errorf("WriteFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
 func Test_isDir(t *testing.T) {
-	fmt.Println(isDir(path))
-	fmt.Println(isDir(dir))
-}
-
-func Test_isDirAndCreate(t *testing.T) {
-	err := isExistsAndCreate(path+"dd",false)
-	fmt.Println(err)
-	if err != nil {
-		panic(err)
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isDir(tt.args.path); got != tt.want {
+				t.Errorf("isDir() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
 func Test_isFile(t *testing.T) {
-	fmt.Println(isFile(path))
-	fmt.Println(isFile(dir))
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isFile(tt.args.path); got != tt.want {
+				t.Errorf("isFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
