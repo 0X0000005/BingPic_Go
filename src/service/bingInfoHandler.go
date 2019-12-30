@@ -14,9 +14,22 @@ func GetUrl(day, num int) string {
 	return BINGIMAGEINFOURL + strconv.Itoa(day) + "&n=" + strconv.Itoa(num)
 }
 
-func GetBingInfo(data []byte, bing *Bing) error {
+func GetBingInfo(data []byte, bing *Bing){
 	err := json.Unmarshal(data, bing)
-	return err
+	if nil != err {
+		fmt.Printf("parse json error:%v\n", err)
+	}
+}
+
+func GetWeekBingInfo()[]Image{
+	bytes1 := tool.GetRequest(GetUrl(0,8))
+	bytes2 := tool.GetRequest(GetUrl(8,8))
+	var bing1 Bing
+	var bing2 Bing
+	GetBingInfo(bytes1,&bing1)
+	GetBingInfo(bytes2,&bing2)
+	images := append(bing1.Images,bing2.Images...)
+	return images
 }
 
 //下载图片
@@ -45,15 +58,18 @@ func downloadPic(imgUrl string, imgPath string) {
 		headSize,_ := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
 		fileSize := f.Size()
 		if headSize != fileSize {
-			fmt.Printf("%v exists,head size:%v,file size:%v\n",f.Name(),headSize,fileSize)
+			fmt.Printf("%v exists,head size:%v,file size:%v,re download\n",f.Name(),headSize,fileSize)
 			bytes = readResponseBody(resp)
 		}else {
 			fmt.Printf("%v exists\n",f.Name())
 		}
 	} else {
+		fmt.Printf("%v not exists,downliad\n",imgPath)
 		bytes = readResponseBody(resp)
 	}
-	tool.WriteFile(imgPath, bytes)
+	if len(bytes)>0 {
+		tool.WriteFile(imgPath, bytes)
+	}
 }
 
 func readResponseBody(resp *http.Response) []byte {
