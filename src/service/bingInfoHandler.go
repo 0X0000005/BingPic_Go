@@ -33,24 +33,33 @@ func GetWeekBingInfo()[]Image{
 }
 
 //下载图片
-func Download(img Image) {
+func Download(img Image) int {
 	enddate := img.Enddate
 	url := img.Url
 	//hash := img.Hsh
 	//copyright := img.Copyright
 	imgUrl := BINGIMAGEBASE + url
 	imgPath := WALLPAPER + "\\" + enddate + ".jpg"
-	downloadPic(imgUrl, imgPath)
+	return downloadPic(imgUrl, imgPath)
 }
 
-func downloadPic(imgUrl string, imgPath string) {
+const DOWNLOADSUCCESS = 1
+
+const DOWNLOADFAIL = -1
+
+const DOWNLOADSKIP = 0
+
+//1下载成功 -1下载失败 0不下载
+func downloadPic(imgUrl string, imgPath string) int{
 	resp, err := http.Get(imgUrl)
 	defer resp.Body.Close()
 	if nil != err {
 		fmt.Printf("get connection error:%v\n", err)
+		return DOWNLOADFAIL
 	}
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("http status not ok:%v\n", resp.StatusCode)
+		return DOWNLOADFAIL
 	}
 	var bytes []byte
 	if tool.IsExists(imgPath){
@@ -59,23 +68,37 @@ func downloadPic(imgUrl string, imgPath string) {
 		fileSize := f.Size()
 		if headSize != fileSize {
 			fmt.Printf("%v exists,head size:%v,file size:%v,re download\n",f.Name(),headSize,fileSize)
-			bytes = readResponseBody(resp)
+			var b bool
+			bytes,b = readResponseBody(resp)
+			if !b {
+				return DOWNLOADFAIL
+			}
 		}else {
 			fmt.Printf("%v exists\n",f.Name())
+			return DOWNLOADSKIP
 		}
 	} else {
-		fmt.Printf("%v not exists,downliad\n",imgPath)
-		bytes = readResponseBody(resp)
+		fmt.Printf("%v not exists,download\n",imgPath)
+		var b bool
+		bytes,b = readResponseBody(resp)
+		if !b {
+			return DOWNLOADFAIL
+		}
 	}
 	if len(bytes)>0 {
-		tool.WriteFile(imgPath, bytes)
+		b := tool.WriteFile(imgPath, bytes)
+		if b {
+			return DOWNLOADSUCCESS
+		}
 	}
+	return DOWNLOADFAIL
 }
 
-func readResponseBody(resp *http.Response) []byte {
+func readResponseBody(resp *http.Response) ([]byte,bool) {
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if nil != err {
 		fmt.Printf("http read body error:%v\n", err)
+		return bytes,false
 	}
-	return bytes
+	return bytes,true
 }
