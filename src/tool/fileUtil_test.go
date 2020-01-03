@@ -3,6 +3,7 @@ package tool
 import (
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"testing"
 )
 
@@ -94,24 +95,11 @@ func TestIsExistsAndCreate(t *testing.T) {
 }
 
 func TestWriteFile(t *testing.T) {
-	type args struct {
-		path string
-		data []byte
+	v,err := strconv.ParseInt("",10,64)
+	if err != nil {
+		fmt.Println(err)
 	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := WriteFile(tt.args.path, tt.args.data); got != tt.want {
-				t.Errorf("WriteFile() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	fmt.Println(v)
 }
 
 func Test_isDir(t *testing.T) {

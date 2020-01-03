@@ -15,27 +15,13 @@ func main() {
 		cost := time.Since(start)
 		fmt.Printf("program run time:%s\n", cost)
 	}()
-	images := service.GetWeekBingInfo()
+
 	tool.IsExistsAndCreate(service.WALLPAPER, true)
+	images := service.GetWeekBingInfo()
+	imageInfos := service.ImageInfoHandler(images)
+	//fmt.Println(imageInfos)
+	service.DownloadImages(&imageInfos)
+	//service.DownloadFirst(&(imageInfos[0]))
 	downloadSuccess, downloadFail, downloadSkip := 0, 0, 0
-	ch := make(chan struct{})
-	for _, imgInfo := range images {
-		//result := service.Download(imgInfo)
-		//fmt.Println(imgInfo)
-		/*if service.DOWNLOADSUCCESS == result {
-			downloadSuccess++
-		} else if service.DOWNLOADFAIL == result {
-			downloadFail++
-		} else if service.DOWNLOADSKIP == result {
-			downloadSkip++
-		}*/
-		go func(imgInfo service.Image) {
-			service.Download(imgInfo)
-			ch<- struct{}{}
-		}(imgInfo)
-	}
-	for range images{
-		<-ch
-	}
 	fmt.Printf("download end.DOWNLOADSUCCESS=%v,DOWNLOADFAIL=%vDOWNLOADSKIP=%v\n", downloadSuccess, downloadFail, downloadSkip)
 }
