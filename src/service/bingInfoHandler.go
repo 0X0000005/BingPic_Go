@@ -137,7 +137,7 @@ func DownloadImages(imgInfos *[]imageinfo.ImageInfo) []imageinfo.ImageInfo {
 		result := <-ch
 		results = append(results, result)
 	}
-	fmt.Println(results)
+	//fmt.Println(results)
 	return results
 }
 
@@ -158,6 +158,6 @@ func DownloadImage(imgInfos *[]imageinfo.ImageInfo) []imageinfo.ImageInfo {
 		download(&info)
 		results = append(results, info)
 	}
-	fmt.Println(results)
+	//fmt.Println(results)
 	return results
 }
