@@ -16,14 +16,14 @@ func GetUrl(day, num int) string {
 	return BINGIMAGEINFOURL + strconv.Itoa(day) + "&n=" + strconv.Itoa(num)
 }
 
-func GetBingInfo(data []byte, bing *imageinfo.Bing){
+func GetBingInfo(data []byte, bing *imageinfo.Bing) {
 	err := json.Unmarshal(data, bing)
 	if nil != err {
 		fmt.Printf("parse json error:%v\n", err)
 	}
 }
 
-func GetWeekBingInfo()[]imageinfo.Image {
+func GetWeekBingInfo() []imageinfo.Image {
 	bytes1 := tool.GetRequest(GetUrl(0, 8))
 	bytes2 := tool.GetRequest(GetUrl(8, 8))
 	var bing1 imageinfo.Bing
@@ -34,15 +34,15 @@ func GetWeekBingInfo()[]imageinfo.Image {
 	return images
 }
 
-func ImageInfoHandler(images []imageinfo.Image) ([]imageinfo.ImageInfo){
+func ImageInfoHandler(images []imageinfo.Image) []imageinfo.ImageInfo {
 	length := len(images)
-	imageInfos := make([]imageinfo.ImageInfo,length, 2*length)
-	for i,imgInfo := range images{
+	imageInfos := make([]imageinfo.ImageInfo, length, length)
+	for i, imgInfo := range images {
 		imageInfo := imageinfo.ImageInfo{}
 		imageInfo.Desc = imgInfo.Copyright
 		imageInfo.DownloadUrl = BINGIMAGEBASE + imgInfo.Url
-		imageInfo.ImageName = imgInfo.Enddate+Symbol_dot+Extension
-		imageInfo.ImagePath = WALLPAPER+Symbol_backslashs+imageInfo.ImageName
+		imageInfo.ImageName = imgInfo.Enddate + Symbol_dot + Extension
+		imageInfo.ImagePath = WALLPAPER + Symbol_backslashs + imageInfo.ImageName
 		imageInfos[i] = imageInfo
 	}
 	return imageInfos
@@ -50,10 +50,10 @@ func ImageInfoHandler(images []imageinfo.Image) ([]imageinfo.ImageInfo){
 
 //下载图片
 //1下载成功 -1下载失败 0不下载
-func download(imgInfo *imageinfo.ImageInfo){
+func download(imgInfo *imageinfo.ImageInfo) {
 	resp, err := http.Get(imgInfo.DownloadUrl)
 	defer func() {
-		if nil != resp{
+		if nil != resp {
 			resp.Body.Close()
 		}
 	}()
@@ -65,27 +65,27 @@ func download(imgInfo *imageinfo.ImageInfo){
 	}
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("http status not ok:%v\n", resp.StatusCode)
-		imgInfo.Err = errors.New("http status not ok:"+ string(resp.StatusCode))
+		imgInfo.Err = errors.New("http status not ok:" + string(resp.StatusCode))
 		imgInfo.DownloadResult = DOWNLOADFAIL
 		return
 	}
 	var bytes []byte
-	if tool.IsExists(imgInfo.ImagePath){
-		f,err_Stat := os.Stat(imgInfo.ImagePath)
+	if tool.IsExists(imgInfo.ImagePath) {
+		f, err_Stat := os.Stat(imgInfo.ImagePath)
 		if err_Stat != nil {
-			imgInfo.Err = errors.New("http status not ok:"+ string(resp.StatusCode))
+			imgInfo.Err = errors.New("http status not ok:" + string(resp.StatusCode))
 			imgInfo.DownloadResult = DOWNLOADFAIL
 			return
 		}
 		fileSize := f.Size()
 		imgInfo.LocalSize = fileSize
-		headSize,err_Head := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+		headSize, err_Head := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
 		if err_Head != nil {
-			fmt.Printf("get resp head [Content-Length] error:%v\n",err_Head)
+			fmt.Printf("get resp head [Content-Length] error:%v\n", err_Head)
 		}
 		imgInfo.ServerSize = headSize
 		if headSize != fileSize {
-			fmt.Printf("%v exists,head size:%v,file size:%v,re download\n",f.Name(),headSize,fileSize)
+			fmt.Printf("%v exists,head size:%v,file size:%v,re download\n", f.Name(), headSize, fileSize)
 			b, err_read := ioutil.ReadAll(resp.Body)
 			bytes = b
 			if err_read != nil {
@@ -93,12 +93,12 @@ func download(imgInfo *imageinfo.ImageInfo){
 				imgInfo.DownloadResult = DOWNLOADFAIL
 				return
 			}
-		}else {
-			fmt.Printf("%v exists\n",f.Name())
+		} else {
+			fmt.Printf("%v exists\n", f.Name())
 			imgInfo.DownloadResult = DOWNLOADSKIP
 		}
 	} else {
-		fmt.Printf("%v not exists,download\n",imgInfo.ImageName)
+		fmt.Printf("%v not exists,download\n", imgInfo.ImageName)
 		b, err_read := ioutil.ReadAll(resp.Body)
 		bytes = b
 		if err_read != nil {
@@ -107,8 +107,8 @@ func download(imgInfo *imageinfo.ImageInfo){
 			return
 		}
 	}
-	if len(bytes)>0 {
-		err_write := ioutil.WriteFile(imgInfo.ImagePath,bytes,0666)
+	if len(bytes) > 0 {
+		err_write := ioutil.WriteFile(imgInfo.ImagePath, bytes, 0666)
 		if err_write != nil {
 			imgInfo.Err = err_write
 			imgInfo.DownloadResult = DOWNLOADFAIL
@@ -123,8 +123,7 @@ func DownloadFirst(imgInfo *imageinfo.ImageInfo) {
 	fmt.Println(imgInfo)
 }
 
-func DownloadImages(imgInfos *[]imageinfo.ImageInfo) []imageinfo.ImageInfo{
-	//downloadSuccess, downloadFail, downloadSkip := 0, 0, 0
+func DownloadImages(imgInfos *[]imageinfo.ImageInfo) []imageinfo.ImageInfo {
 	ch := make(chan imageinfo.ImageInfo)
 	for _, imgInfo := range *imgInfos {
 		info := imageinfo.New(imgInfo)
@@ -134,10 +133,31 @@ func DownloadImages(imgInfos *[]imageinfo.ImageInfo) []imageinfo.ImageInfo{
 		}(&info)
 	}
 	var results []imageinfo.ImageInfo
-	for range *imgInfos{
+	for range *imgInfos {
 		result := <-ch
-		results = append(results,result)
+		results = append(results, result)
 	}
-	fmt.Println(len(results))
+	fmt.Println(results)
+	return results
+}
+
+var taskMap = make(map[string]string)
+
+func isLoadTask(taskName string) bool {
+	_, ok := taskMap[taskName]
+	if !ok {
+		taskMap[taskName] = taskName
+	}
+	return ok
+}
+
+func DownloadImage(imgInfos *[]imageinfo.ImageInfo) []imageinfo.ImageInfo {
+	var results []imageinfo.ImageInfo
+	for _, imgInfo := range *imgInfos {
+		info := imageinfo.New(imgInfo)
+		download(&info)
+		results = append(results, info)
+	}
+	fmt.Println(results)
 	return results
 }

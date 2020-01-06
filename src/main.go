@@ -2,26 +2,39 @@ package main
 
 import (
 	"fmt"
+	"null/BingPic/src/imageinfo"
 	"null/BingPic/src/service"
 	"null/BingPic/src/tool"
 	"time"
 )
 
-const testurl = "http://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8"
-
 func main() {
 	start := time.Now()
 	defer func() {
 		cost := time.Since(start)
-		fmt.Printf("program run time:%s\n", cost)
+		fmt.Printf("Program Run Time:%s\n", cost)
 	}()
 
 	tool.IsExistsAndCreate(service.WALLPAPER, true)
 	images := service.GetWeekBingInfo()
 	imageInfos := service.ImageInfoHandler(images)
-	//fmt.Println(imageInfos)
-	service.DownloadImages(&imageInfos)
-	//service.DownloadFirst(&(imageInfos[0]))
+	result := service.DownloadImages(&imageInfos)
+	//result := service.DownloadImage(&imageInfos)
+	count(result)
+}
+
+func count(images []imageinfo.ImageInfo){
 	downloadSuccess, downloadFail, downloadSkip := 0, 0, 0
-	fmt.Printf("download end.DOWNLOADSUCCESS=%v,DOWNLOADFAIL=%vDOWNLOADSKIP=%v\n", downloadSuccess, downloadFail, downloadSkip)
+	for _,imgResult := range images{
+		switch imgResult.DownloadResult {
+		case service.DOWNLOADFAIL:
+			downloadFail++
+		case service.DOWNLOADSUCCESS :
+			downloadSuccess++
+		case service.DOWNLOADSKIP:
+			downloadSkip++
+		}
+	}
+	fmt.Printf("Download end.\nDOWNLOADSUCCESS=%v\nDOWNLOADFAIL=%v\nDOWNLOADSKIP=%v\n", downloadSuccess, downloadFail, downloadSkip)
+	fmt.Scanln()
 }
