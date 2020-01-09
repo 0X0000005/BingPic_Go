@@ -15,7 +15,9 @@ type ImageInfo struct {
 	ImageName string
 	ImagePath string
 	LocalSize int64
+	LocalHash string
 	ServerSize int64
+	ServerHash string
 	Desc string
 	DownloadUrl string
 	DownloadResult int

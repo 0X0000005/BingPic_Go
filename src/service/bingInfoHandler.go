@@ -1,15 +1,15 @@
 package service
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"null/BingPic/src/imageinfo"
-	"null/BingPic/src/tool"
-	"os"
-	"strconv"
+"encoding/json"
+"errors"
+"fmt"
+"io/ioutil"
+"net/http"
+"null/BingPic/src/imageinfo"
+"null/BingPic/src/tool"
+"os"
+"strconv"
 )
 
 func GetUrl(day, num int) string {
@@ -23,14 +23,31 @@ func GetBingInfo(data []byte, bing *imageinfo.Bing) {
 	}
 }
 
+func getBingInfo(day int,num int) ([]imageinfo.Image,error){
+	bytes,err := tool.GetRequest(GetUrl(day, num))
+	if err != nil {
+		return nil,err
+	}
+	var bing imageinfo.Bing
+	err2 := json.Unmarshal(bytes, &bing)
+	if err2 != nil {
+		return nil,err2
+	}
+	return bing.Images,nil
+}
+
 func GetWeekBingInfo() []imageinfo.Image {
-	bytes1 := tool.GetRequest(GetUrl(0, 8))
-	bytes2 := tool.GetRequest(GetUrl(8, 8))
-	var bing1 imageinfo.Bing
-	var bing2 imageinfo.Bing
-	GetBingInfo(bytes1, &bing1)
-	GetBingInfo(bytes2, &bing2)
-	images := append(bing1.Images, bing2.Images...)
+	images1,err1 := getBingInfo(0,8)
+	if err1 != nil {
+		fmt.Printf("get bing info error,day=0,num=8,error message:=%v\n",err1)
+		return nil
+	}
+	images2,err2 := getBingInfo(8,8)
+	if err2 != nil {
+		fmt.Printf("get bing info error,day=8,num=8,error message:=%v\n",err2)
+		return nil
+	}
+	images := append(images1, images2...)
 	return images
 }
 

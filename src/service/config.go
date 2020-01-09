@@ -17,3 +17,7 @@ const DOWNLOADSUCCESS = 1
 const DOWNLOADFAIL = -1
 
 const DOWNLOADSKIP = 0
+
+const HOST = "localhost"
+
+const PORT = "8080"

@@ -1,26 +1,53 @@
 package tool
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os/exec"
+	"strings"
 )
 
-func GetRequest(url string) ([]byte) {
+func GetRequest(url string) ([]byte,error) {
 	resp, err := http.Get(url)
-	defer resp.Body.Close()
+	defer func() {
+		if nil != resp {
+			resp.Body.Close()
+		}
+	}()
 	if nil != err {
-		fmt.Printf("get connection error:%v\n", err)
+		return nil,err
 	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("http status not ok:%v\n", resp.StatusCode)
+		errorInfo := fmt.Sprintf("http status not ok:%v\n",resp.StatusCode)
+		return nil,errors.New(errorInfo)
 	}
 	fmt.Printf("http status code:%v\n", resp.StatusCode)
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if nil != err {
-		fmt.Printf("http read body error:%v\n", err)
+	bytes, err2 := ioutil.ReadAll(resp.Body)
+	if nil != err2 {
+		return nil,err2
 	}
-	return bytes
+	return bytes,nil
 }
 
+
+
+func startServer(url string){
+	http.HandleFunc("/",handlerServer)
+	log.Fatal(http.ListenAndServe(url,nil))
+}
+
+func openBrowser(url string){
+	if !strings.HasPrefix(url,"http://"){
+		url = "http://" + url
+	}
+	cmd := exec.Command("cmd", "/C", "start "+url)
+	cmd.Run()
+}
+
+func handlerServer(w http.ResponseWriter,r *http.Request){
+	fmt.Fprintf(w, "URL.Path = %v\n", "aaaa")
+}
 

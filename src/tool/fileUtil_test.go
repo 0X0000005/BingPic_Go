@@ -3,6 +3,7 @@ package tool
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"testing"
 )
@@ -74,24 +75,7 @@ func TestIsExists(t *testing.T) {
 }
 
 func TestIsExistsAndCreate(t *testing.T) {
-	type args struct {
-		path        string
-		isDirectory bool
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := IsExistsAndCreate(tt.args.path, tt.args.isDirectory); (err != nil) != tt.wantErr {
-				t.Errorf("IsExistsAndCreate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	log.Fatalf("123%v\n","aa")
 }
 
 func TestWriteFile(t *testing.T) {

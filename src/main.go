@@ -5,6 +5,7 @@ import (
 	"null/BingPic/src/imageinfo"
 	"null/BingPic/src/service"
 	"null/BingPic/src/tool"
+	"os"
 	"time"
 )
 
@@ -12,19 +13,27 @@ func main() {
 	fmt.Println("*****按下回车开始*****")
 	fmt.Scanln()
 	start := time.Now()
-	serviceRun()
+	taskRun()
 	defer func() {
 		cost := time.Since(start)
 		fmt.Printf("Program Run Time:%s\n", cost)
 		fmt.Println("*****按下回车退出*****")
 		fmt.Scanln()
 	}()
-
 }
 
-func serviceRun(){
+func exit(){
+	fmt.Println("*****按下回车退出*****")
+	fmt.Scanln()
+	os.Exit(0)
+}
+
+func taskRun(){
 	tool.IsExistsAndCreate(service.WALLPAPER, true)
 	images := service.GetWeekBingInfo()
+	if nil == images {
+		exit()
+	}
 	imageInfos := service.ImageInfoHandler(images)
 	result := service.DownloadImages(&imageInfos)
 	//result := service.DownloadImage(&imageInfos)
