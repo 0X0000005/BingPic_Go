@@ -96,10 +96,7 @@ func download(imgInfo *imageinfo.ImageInfo) {
 		}
 		fileSize := f.Size()
 		imgInfo.LocalSize = fileSize
-		headSize, err_Head := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-		if err_Head != nil {
-			fmt.Printf("get resp head [Content-Length] error:%v\n", err_Head)
-		}
+		headSize := resp.ContentLength
 		imgInfo.ServerSize = headSize
 		if headSize != fileSize {
 			fmt.Printf("%v exists,head size:%v,file size:%v,re download\n", f.Name(), headSize, fileSize)
