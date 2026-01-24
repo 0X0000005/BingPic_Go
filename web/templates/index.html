@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>壁纸管理 (Wallpaper Manager)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00bcd4;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .card-body {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #modal img {
+            max-width: 90%;
+            max-height: 90%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>壁纸画廊</h1>
+    <div class="gallery" id="gallery">
+        <!-- Images will be loaded here -->
+    </div>
+
+    <div id="modal" onclick="closeModal()">
+        <span class="close">&times;</span>
+        <img id="modal-img" src="">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchImages();
+        });
+
+        function fetchImages() {
+            fetch('/api/images')
+                .then(response => response.json())
+                .then(images => {
+                    const gallery = document.getElementById('gallery');
+                    gallery.innerHTML = '';
+                    if (!images || images.length === 0) {
+                        gallery.innerHTML = '<p style="text-align:center;width:100%">暂无图片</p>';
+                        return;
+                    }
+                    images.forEach(src => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+
+                        const filename = src.split('/').pop();
+
+                        card.innerHTML = `
+                            <img src="${src}" alt="${filename}" loading="lazy" onclick="openModal('${src}')">
+                            <div class="card-body">
+                                <div class="card-title" title="${filename}">${filename}</div>
+                            </div>
+                        `;
+                        gallery.appendChild(card);
+                    });
+                })
+                .catch(err => console.error('Error fetching images:', err));
+        }
+
+        function openModal(src) {
+            const modal = document.getElementById('modal');
+            const img = document.getElementById('modal-img');
+            img.src = src;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+download:
+  path: "./wallpapers"
+  bing:
+    enabled: true
+    schedule: "0 10 * * *" # 每天上午 10 点
+  spotlight:
+    enabled: true
+    schedule: "0 */1 * * *" # 每小时
