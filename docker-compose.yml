@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    image: wallpaper-manager:latest
+    container_name: wallpaper-manager
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wallpapers:/app/wallpapers
+      - ./config.yaml:/app/config.yaml
+    environment:
+      - TZ=Asia/Shanghai
