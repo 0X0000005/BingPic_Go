@@ -35,17 +35,18 @@ go run cmd/server/main.go
 
 ### 构建
 使用提供的构建脚本:
+
+**Windows (cmd/powershell):**
+```bat
+build.bat all
+```
+
+**Linux/Mac (bash):**
 ```bash
-# 构建当前平台
-./build.sh
-
-# 构建指定平台
-./build.sh windows
-./build.sh linux
-
 # 构建所有支持的平台
 ./build.sh all
 ```
+输出位于 `dist/` 目录。
 输出位于 `dist/` 目录。
 
 ### Docker

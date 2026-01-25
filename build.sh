@@ -2,22 +2,12 @@
 
 # 默认值
 PLATFORMS="windows/amd64 linux/amd64"
-OUTPUT_DIR="dist"
-APP_NAME="WallpaperManager"
+OUTPUT_DIR="."
+APP_NAME="WM"
 USE_UPX=true
 
-# 解析参数 (简单实现)
-if [ "$1" == "linux" ]; then
-    PLATFORMS="linux/amd64"
-elif [ "$1" == "windows" ]; then
-    PLATFORMS="windows/amd64"
-elif [ "$1" == "all" ]; then
-    PLATFORMS="windows/amd64 linux/amd64"
-fi
-
-# 清理输出目录
-rm -rf $OUTPUT_DIR
-mkdir -p $OUTPUT_DIR
+# 默认编译所有平台
+PLATFORMS="windows/amd64 linux/amd64"
 
 # 检查 UPX
 if ! command -v upx &> /dev/null; then
@@ -51,9 +41,4 @@ for PLATFORM in $PLATFORMS; do
     fi
 done
 
-# 复制配置和 Web 资源
-echo "复制配置和资源..."
-cp config.yaml $OUTPUT_DIR/
-cp -r web $OUTPUT_DIR/
-
-echo "构建完成！构建产物在 $OUTPUT_DIR"
+echo "构建完成！构建产物在项目根目录"

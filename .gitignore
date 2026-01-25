@@ -18,3 +18,7 @@
 dist/
 wallpapers/
 config_*.yaml
+
+# Build artifacts
+WM-*
+WallpaperManager-*
