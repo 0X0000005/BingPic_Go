@@ -16,17 +16,11 @@ type ServerConfig struct {
 }
 
 type DownloadConfig struct {
-	Path      string          `yaml:"path"`
-	Bing      BingConfig      `yaml:"bing"`
-	Spotlight SpotlightConfig `yaml:"spotlight"`
+	Path string     `yaml:"path"`
+	Bing BingConfig `yaml:"bing"`
 }
 
 type BingConfig struct {
-	Enabled  bool   `yaml:"enabled"`
-	Schedule string `yaml:"schedule"`
-}
-
-type SpotlightConfig struct {
 	Enabled  bool   `yaml:"enabled"`
 	Schedule string `yaml:"schedule"`
 }
@@ -45,4 +39,14 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	return &config, nil
+}
+
+// SaveConfig 保存配置到指定路径
+func SaveConfig(path string, config *Config) error {
+	data, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
 }

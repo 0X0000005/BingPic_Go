@@ -12,6 +12,7 @@ import (
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "配置文件路径")
+	mode := flag.String("mode", "web", "运行模式: web 或 cli")
 	flag.Parse()
 
 	// 1. 加载配置
@@ -20,12 +21,23 @@ func main() {
 		log.Fatalf("加载配置失败: %v", err)
 	}
 
-	// 2. 初始化调度器
+	// 初始化 Bing 下载器
+	bingDL := downloader.NewBingDownloader(cfg.Download.Path)
+
+	if *mode == "cli" {
+		log.Println("以 CLI 模式运行...")
+		if errors := bingDL.DownloadTodayWallpaper(); errors != nil {
+			log.Fatalf("Bing 壁纸下载失败: %v", errors)
+		}
+		log.Println("Bing 壁纸下载完成")
+		return
+	}
+
+	// 2. 初始化调度器 (Web 模式)
 	sched := scheduler.NewScheduler()
 
 	// 3. 注册 Bing 任务
 	if cfg.Download.Bing.Enabled {
-		bingDL := downloader.NewBingDownloader(cfg.Download.Path)
 		// 启动时立即运行一次
 		go func() {
 			if err := bingDL.DownloadTodayWallpaper(); err != nil {
@@ -44,33 +56,12 @@ func main() {
 		}
 	}
 
-	// 4. 注册 Spotlight 任务
-	if cfg.Download.Spotlight.Enabled {
-		spotlightDL := downloader.NewSpotlightExtractor(cfg.Download.Path)
-		// 启动时立即运行一次
-		go func() {
-			if err := spotlightDL.Extract(); err != nil {
-				log.Printf("初始 Spotlight 提取失败: %v", err)
-			}
-		}()
-
-		err := sched.AddJob(cfg.Download.Spotlight.Schedule, func() {
-			log.Println("执行 Spotlight 提取任务...")
-			if err := spotlightDL.Extract(); err != nil {
-				log.Printf("Spotlight 提取失败: %v", err)
-			}
-		})
-		if err != nil {
-			log.Fatalf("调度 Spotlight 任务失败: %v", err)
-		}
-	}
-
 	// 启动调度器
 	sched.Start()
 	defer sched.Stop()
 
-	// 5. 启动 Web 服务器
-	srv := server.NewServer(cfg)
+	// 4. 启动 Web 服务器
+	srv := server.NewServer(cfg, *configPath)
 	if err := srv.Start(); err != nil {
 		log.Fatalf("Web 服务器失败: %v", err)
 	}

@@ -14,12 +14,14 @@ import (
 )
 
 type Server struct {
-	Config *config.Config
+	Config     *config.Config
+	ConfigPath string
 }
 
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, configPath string) *Server {
 	return &Server{
-		Config: cfg,
+		Config:     cfg,
+		ConfigPath: configPath,
 	}
 }
 
@@ -30,6 +32,7 @@ func (s *Server) Start() error {
 
 	// 处理 API
 	http.HandleFunc("/api/images", s.handleListImages)
+	http.HandleFunc("/api/config", s.handleConfig)
 
 	// 处理图片文件 (动态文件，仍在磁盘上)
 	fsImages := http.FileServer(http.Dir(s.Config.Download.Path))
@@ -54,6 +57,35 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// 渲染页面
 	tmpl.Execute(w, nil)
+}
+
+func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s.Config)
+	case http.MethodPost:
+		var newConfig config.Config
+		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
+			http.Error(w, "无效的 JSON 配置", http.StatusBadRequest)
+			return
+		}
+
+		// Update config
+		s.Config.Server = newConfig.Server
+		s.Config.Download = newConfig.Download
+
+		// Save to file
+		if err := config.SaveConfig(s.ConfigPath, s.Config); err != nil {
+			http.Error(w, "保存配置失败", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("配置已更新"))
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleListImages(w http.ResponseWriter, r *http.Request) {

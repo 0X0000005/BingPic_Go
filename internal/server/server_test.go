@@ -29,7 +29,7 @@ func TestHandleListImages(t *testing.T) {
 			Path: tmpDir,
 		},
 	}
-	srv := NewServer(cfg)
+	srv := NewServer(cfg, "")
 
 	req, _ := http.NewRequest("GET", "/api/images", nil)
 	rr := httptest.NewRecorder()

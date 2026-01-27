@@ -85,18 +85,147 @@
             font-size: 40px;
             cursor: pointer;
         }
+
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #00bcd4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .settings-btn:hover {
+            background-color: #0097a7;
+        }
+
+        #settings-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: #1e1e1e;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #333;
+            width: 400px;
+            max-width: 90%;
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-settings {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-settings:hover,
+        .close-settings:focus {
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ddd;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-group input {
+            margin-right: 10px;
+        }
+
+        button[type="button"] {
+            background-color: #00bcd4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button[type="button"]:hover {
+            background-color: #0097a7;
+        }
     </style>
 </head>
 
 <body>
     <h1>壁纸画廊</h1>
+    <button class="settings-btn" onclick="openSettings()">⚙ 设置</button>
     <div class="gallery" id="gallery">
         <!-- Images will be loaded here -->
     </div>
 
+    <!-- Image Preview Modal -->
     <div id="modal" onclick="closeModal()">
         <span class="close">&times;</span>
         <img id="modal-img" src="">
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-settings" onclick="closeSettings()">&times;</span>
+            <h2>设置</h2>
+            <form id="settings-form">
+                <div class="form-group">
+                    <label for="download-path">下载路径:</label>
+                    <input type="text" id="download-path" name="path">
+                </div>
+                <div class="form-group">
+                    <label>Bing 壁纸:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="bing-enabled" name="bing-enabled">
+                        <label for="bing-enabled">启用下载</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="bing-schedule">定时任务 (Cron):</label>
+                    <input type="text" id="bing-schedule" name="bing-schedule">
+                </div>
+                <button type="button" onclick="saveSettings()">保存配置</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -141,6 +270,61 @@
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
+        }
+
+        // Settings Logic
+        function openSettings() {
+            fetch('/api/config')
+                .then(response => response.json())
+                .then(config => {
+                    document.getElementById('download-path').value = config.download.path;
+                    document.getElementById('bing-enabled').checked = config.download.bing.enabled;
+                    document.getElementById('bing-schedule').value = config.download.bing.schedule;
+                    document.getElementById('settings-modal').style.display = 'block';
+                })
+                .catch(err => alert('加载配置失败: ' + err));
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function saveSettings() {
+            const config = {
+                server: { port: 8080 }, // Preserve existing port or fetch if needed, currently hardcoded assumption or partial update
+                download: {
+                    path: document.getElementById('download-path').value,
+                    bing: {
+                        enabled: document.getElementById('bing-enabled').checked,
+                        schedule: document.getElementById('bing-schedule').value
+                    }
+                }
+            };
+
+            // Re-fetch current config to merge server config properly if missed
+            fetch('/api/config')
+                .then(res => res.json())
+                .then(currentConfig => {
+                    config.server = currentConfig.server; // Keep server config intact
+
+                    fetch('/api/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(config)
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                alert('配置已保存 (可能需要重启生效)');
+                                closeSettings();
+                                fetchImages(); // Refresh in case path changed
+                            } else {
+                                alert('保存失败');
+                            }
+                        })
+                        .catch(err => alert('保存错误: ' + err));
+                });
         }
     </script>
 </body>

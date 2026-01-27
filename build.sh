@@ -21,14 +21,14 @@ go mod tidy
 for PLATFORM in $PLATFORMS; do
     GOOS=${PLATFORM%/*}
     GOARCH=${PLATFORM#*/}
-    OUTPUT_NAME=$APP_NAME
-    
     if [ "$GOOS" == "windows" ]; then
-        OUTPUT_NAME+=".exe"
+        OUTPUT_FILENAME="wm.exe"
+    else
+        OUTPUT_FILENAME="wm"
     fi
 
     echo "正在构建 $GOOS/$GOARCH..."
-    env GOOS=$GOOS GOARCH=$GOARCH go build -o $OUTPUT_DIR/$OUTPUT_NAME-$GOOS-$GOARCH cmd/server/main.go
+    env GOOS=$GOOS GOARCH=$GOARCH go build -o $OUTPUT_DIR/$OUTPUT_FILENAME cmd/server/main.go
 
     if [ $? -ne 0 ]; then
         echo "发生错误！终止脚本执行..."
@@ -37,7 +37,7 @@ for PLATFORM in $PLATFORMS; do
 
     if [ "$USE_UPX" = true ]; then
         echo "正在使用 UPX 压缩..."
-        upx $OUTPUT_DIR/$OUTPUT_NAME-$GOOS-$GOARCH
+        upx $OUTPUT_DIR/$OUTPUT_FILENAME
     fi
 done
 

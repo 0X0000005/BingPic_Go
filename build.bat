@@ -22,17 +22,17 @@ for %%P in (%PLATFORMS%) do (
     for /f "tokens=1,2 delims=/" %%a in ("%%P") do (
         set CURRENT_GOOS=%%a
         set CURRENT_GOARCH=%%b
-        set OUTPUT_NAME=%APP_NAME%
-        
         if "!CURRENT_GOOS!"=="windows" (
-            set OUTPUT_NAME=!APP_NAME!.exe
+            set OUTPUT_FILENAME=wm.exe
+        ) else (
+            set OUTPUT_FILENAME=wm
         )
         
         echo Building !CURRENT_GOOS!/!CURRENT_GOARCH!...
         set GOOS=!CURRENT_GOOS!
         set GOARCH=!CURRENT_GOARCH!
         
-        go build -o %OUTPUT_DIR%\!OUTPUT_NAME!-!CURRENT_GOOS!-!CURRENT_GOARCH! cmd\server\main.go
+        go build -o %OUTPUT_DIR%\!OUTPUT_FILENAME! cmd\server\main.go
         
         if !errorlevel! neq 0 (
             echo Build failed!
@@ -41,7 +41,7 @@ for %%P in (%PLATFORMS%) do (
         
         if "!USE_UPX!"=="true" (
             echo Compressing via UPX...
-            upx %OUTPUT_DIR%\!OUTPUT_NAME!-!CURRENT_GOOS!-!CURRENT_GOARCH!
+            upx %OUTPUT_DIR%\!OUTPUT_FILENAME!
         )
     )
 )
