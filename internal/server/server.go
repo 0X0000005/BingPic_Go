@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"WallpaperManager/internal/config"
@@ -33,6 +34,7 @@ func (s *Server) Start() error {
 	// 处理 API
 	http.HandleFunc("/api/images", s.handleListImages)
 	http.HandleFunc("/api/config", s.handleConfig)
+	http.HandleFunc("/api/fs/list", s.handleListFiles)
 
 	// 处理图片文件 (动态文件，仍在磁盘上)
 	fsImages := http.FileServer(http.Dir(s.Config.Download.Path))
@@ -117,4 +119,96 @@ func (s *Server) handleListImages(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(images)
+}
+
+type FileInfo struct {
+	Name  string `json:"name"`
+	Path  string `json:"path"`
+	IsDir bool   `json:"isDir"`
+}
+
+type FsListResponse struct {
+	Current string     `json:"current"`
+	Parent  string     `json:"parent"`
+	Items   []FileInfo `json:"items"`
+}
+
+func (s *Server) handleListFiles(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+
+	// Handle logical root for Windows
+	if runtime.GOOS == "windows" && (path == "" || path == "/") {
+		var items []FileInfo
+		for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
+			drivePath := string(drive) + ":\\"
+			if _, err := os.Stat(drivePath); err == nil {
+				items = append(items, FileInfo{
+					Name:  drivePath,
+					Path:  drivePath,
+					IsDir: true,
+				})
+			}
+		}
+		resp := FsListResponse{
+			Current: "",
+			Parent:  "",
+			Items:   items,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	if path == "" {
+		path = "/" // Default for Linux, though handled above for Windows implication
+		if runtime.GOOS == "windows" {
+			// Should have been handled above, but fallback
+			path = "C:\\"
+		}
+	}
+
+	// Clean path but preserve Windows drive roots
+	path = filepath.Clean(path)
+	// filepath.Clean("C:\") returns "C:\", but "C:" returns "C:." which is ambiguous.
+	// Let's rely on the input path being a valid absolute path from our drive list or navigation.
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to read directory: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var items []FileInfo
+	for _, entry := range entries {
+		if entry.IsDir() {
+			items = append(items, FileInfo{
+				Name:  entry.Name(),
+				Path:  filepath.Join(path, entry.Name()),
+				IsDir: true,
+			})
+		}
+	}
+
+	parent := filepath.Dir(path)
+	// On Windows, filepath.Dir("C:\") is "C:\". check if we are at root
+	if runtime.GOOS == "windows" {
+		if strings.HasSuffix(path, ":\\") && len(path) == 3 {
+			parent = "" // Go up to drive list
+		} else if parent == path {
+			parent = ""
+		}
+	} else {
+		if parent == path {
+			parent = ""
+		}
+	}
+
+	resp := FsListResponse{
+		Current: path,
+		Parent:  parent,
+		Items:   items,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

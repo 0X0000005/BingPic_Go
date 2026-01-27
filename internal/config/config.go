@@ -7,22 +7,22 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Download DownloadConfig `yaml:"download"`
+	Server   ServerConfig   `yaml:"server" json:"server"`
+	Download DownloadConfig `yaml:"download" json:"download"`
 }
 
 type ServerConfig struct {
-	Port int `yaml:"port"`
+	Port int `yaml:"port" json:"port"`
 }
 
 type DownloadConfig struct {
-	Path string     `yaml:"path"`
-	Bing BingConfig `yaml:"bing"`
+	Path string     `yaml:"path" json:"path"`
+	Bing BingConfig `yaml:"bing" json:"bing"`
 }
 
 type BingConfig struct {
-	Enabled  bool   `yaml:"enabled"`
-	Schedule string `yaml:"schedule"`
+	Enabled  bool   `yaml:"enabled" json:"enabled"`
+	Schedule string `yaml:"schedule" json:"schedule"`
 }
 
 // LoadConfig 从指定路径加载 yaml 配置

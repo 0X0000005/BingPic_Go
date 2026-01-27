@@ -186,6 +186,82 @@
         button[type="button"]:hover {
             background-color: #0097a7;
         }
+
+        #file-browser-modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* File Browser Styles */
+        .file-browser-content {
+            background-color: #1e1e1e;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #333;
+            width: 600px;
+            max-width: 90%;
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #444;
+            margin: 10px 0;
+            padding: 10px;
+            background: #252525;
+        }
+
+        .file-item {
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .file-item:hover {
+            background-color: #333;
+        }
+
+        .file-item.selected {
+            background-color: #00bcd4;
+            color: #fff;
+        }
+
+        .file-icon {
+            margin-right: 10px;
+        }
+
+        .browser-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .current-path {
+            flex: 1;
+            background: #333;
+            padding: 5px 10px;
+            margin: 0 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 
@@ -210,7 +286,11 @@
             <form id="settings-form">
                 <div class="form-group">
                     <label for="download-path">下载路径:</label>
-                    <input type="text" id="download-path" name="path">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="download-path" name="path" style="flex: 1;">
+                        <button type="button" onclick="openFileBrowser()"
+                            style="width: auto; margin-top: 0;">选择文件夹</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Bing 壁纸:</label>
@@ -225,6 +305,28 @@
                 </div>
                 <button type="button" onclick="saveSettings()">保存配置</button>
             </form>
+            </form>
+        </div>
+    </div>
+
+    <!-- File Browser Modal -->
+    <div id="file-browser-modal" class="modal">
+        <div class="file-browser-content">
+            <span class="close-settings" onclick="closeFileBrowser()">&times;</span>
+            <h2>选择文件夹</h2>
+            <div class="browser-controls">
+                <button type="button" onclick="loadFileList(currentParentPath)"
+                    style="width: auto; padding: 5px 15px;">⬆ 上一级</button>
+                <div class="current-path" id="browser-current-path"></div>
+            </div>
+            <div class="file-list" id="file-list">
+                <!-- File items here -->
+            </div>
+            <div style="text-align: right; margin-top: 10px;">
+                <button type="button" onclick="confirmSelection()" style="width: auto;">确认选择</button>
+                <button type="button" onclick="closeFileBrowser()"
+                    style="width: auto; background-color: #666;">取消</button>
+            </div>
         </div>
     </div>
 
@@ -325,6 +427,59 @@
                         })
                         .catch(err => alert('保存错误: ' + err));
                 });
+        }
+
+        let currentBrowserPath = '';
+        let currentParentPath = '';
+
+        function openFileBrowser() {
+            document.getElementById('file-browser-modal').style.display = 'block';
+            // Start listing from current config path or root
+            const initialPath = document.getElementById('download-path').value || '';
+            loadFileList(initialPath);
+        }
+
+        function closeFileBrowser() {
+            document.getElementById('file-browser-modal').style.display = 'none';
+        }
+
+        function loadFileList(path) {
+            const url = path ? `/api/fs/list?path=${encodeURIComponent(path)}` : '/api/fs/list';
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('file-list');
+                    list.innerHTML = '';
+
+                    currentBrowserPath = data.current;
+                    currentParentPath = data.parent;
+                    document.getElementById('browser-current-path').innerText = data.current;
+
+                    if (!data.items || data.items.length === 0) {
+                        list.innerHTML = '<div style="padding:10px;color:#aaa;">(空文件夹)</div>';
+                        return;
+                    }
+
+                    data.items.forEach(item => {
+                        if (!item.isDir) return; // Show folders only
+
+                        const div = document.createElement('div');
+                        div.className = 'file-item';
+                        div.innerHTML = `
+                            <span class="file-icon">📁</span>
+                            <span>${item.name}</span>
+                        `;
+                        div.onclick = () => loadFileList(item.path);
+                        list.appendChild(div);
+                    });
+                })
+                .catch(err => console.error('Load files failed:', err));
+        }
+
+        function confirmSelection() {
+            document.getElementById('download-path').value = currentBrowserPath;
+            closeFileBrowser();
         }
     </script>
 </body>
