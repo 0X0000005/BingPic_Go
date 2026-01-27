@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"WallpaperManager/internal/config"
+	"WallpaperManager/internal/downloader"
 	"WallpaperManager/web"
 )
 
@@ -35,6 +36,8 @@ func (s *Server) Start() error {
 	http.HandleFunc("/api/images", s.handleListImages)
 	http.HandleFunc("/api/config", s.handleConfig)
 	http.HandleFunc("/api/fs/list", s.handleListFiles)
+	http.HandleFunc("/api/fs/shortcuts", s.handleGetShortcuts)
+	http.HandleFunc("/api/download", s.handleDownload)
 
 	// 处理图片文件 (动态文件，仍在磁盘上)
 	fsImages := http.FileServer(http.Dir(s.Config.Download.Path))
@@ -59,6 +62,24 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// 渲染页面
 	tmpl.Execute(w, nil)
+}
+
+func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Re-initialize downloader with current config path
+	dl := downloader.NewBingDownloader(s.Config.Download.Path)
+
+	if err := dl.DownloadRecentWallpapers(); err != nil {
+		http.Error(w, fmt.Sprintf("Download failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Download started and completed."))
 }
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
@@ -207,6 +228,36 @@ func (s *Server) handleListFiles(w http.ResponseWriter, r *http.Request) {
 		Current: path,
 		Parent:  parent,
 		Items:   items,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+type ShortcutsResponse struct {
+	Home    string `json:"home"`
+	Desktop string `json:"desktop"`
+	Root    string `json:"root"`
+}
+
+func (s *Server) handleGetShortcuts(w http.ResponseWriter, r *http.Request) {
+	home, _ := os.UserHomeDir()
+	desktop := filepath.Join(home, "Desktop")
+
+	// Check if Desktop exists
+	if _, err := os.Stat(desktop); os.IsNotExist(err) {
+		desktop = home // Fallback
+	}
+
+	root := ""
+	if runtime.GOOS != "windows" {
+		root = "/"
+	}
+
+	resp := ShortcutsResponse{
+		Home:    home,
+		Desktop: desktop,
+		Root:    root,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

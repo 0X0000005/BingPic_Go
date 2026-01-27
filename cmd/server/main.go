@@ -26,7 +26,7 @@ func main() {
 
 	if *mode == "cli" {
 		log.Println("以 CLI 模式运行...")
-		if errors := bingDL.DownloadTodayWallpaper(); errors != nil {
+		if errors := bingDL.DownloadRecentWallpapers(); errors != nil {
 			log.Fatalf("Bing 壁纸下载失败: %v", errors)
 		}
 		log.Println("Bing 壁纸下载完成")
@@ -38,16 +38,10 @@ func main() {
 
 	// 3. 注册 Bing 任务
 	if cfg.Download.Bing.Enabled {
-		// 启动时立即运行一次
-		go func() {
-			if err := bingDL.DownloadTodayWallpaper(); err != nil {
-				log.Printf("初始 Bing 壁纸下载失败: %v", err)
-			}
-		}()
-
+		// Web 模式下不再自动立即下载，只注册定时任务
 		err := sched.AddJob(cfg.Download.Bing.Schedule, func() {
 			log.Println("执行 Bing 壁纸下载任务...")
-			if err := bingDL.DownloadTodayWallpaper(); err != nil {
+			if err := bingDL.DownloadRecentWallpapers(); err != nil {
 				log.Printf("Bing 壁纸下载失败: %v", err)
 			}
 		})
