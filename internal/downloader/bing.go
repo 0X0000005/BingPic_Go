@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 
 type BingDownloader struct {
 	DownloadPath string
+	client       *http.Client
 }
 
 type BingResponse struct {
@@ -33,6 +35,9 @@ type BingResponse struct {
 func NewBingDownloader(downloadPath string) *BingDownloader {
 	return &BingDownloader{
 		DownloadPath: downloadPath,
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
@@ -57,7 +62,7 @@ func (d *BingDownloader) downloadBatch(idx int) error {
 	url := fmt.Sprintf(BingAPIURLTemplate, idx)
 
 	// 获取 Bing 数据
-	resp, err := http.Get(url)
+	resp, err := d.client.Get(url)
 	if err != nil {
 		return fmt.Errorf("请求 Bing API 失败: %w", err)
 	}
@@ -91,9 +96,9 @@ func (d *BingDownloader) downloadBatch(idx int) error {
 			continue
 		}
 
-		// 下载图片
+		// Download image
 		fmt.Printf("正在下载: %s\n", filename)
-		imgResp, err := http.Get(imageURL)
+		imgResp, err := d.client.Get(imageURL)
 		if err != nil {
 			fmt.Printf("下载图片失败 [%s]: %v\n", filename, err)
 			continue
