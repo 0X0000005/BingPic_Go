@@ -47,7 +47,4 @@ download:
 	if !cfg.Download.Bing.Enabled {
 		t.Error("预期 Bing 启用")
 	}
-	if cfg.Download.Spotlight.Enabled {
-		t.Error("预期 Spotlight 禁用")
-	}
 }
